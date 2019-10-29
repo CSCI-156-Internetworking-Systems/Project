@@ -1,4 +1,5 @@
 import socket
+import json
 
 print("Message Constants Imported!")
 
@@ -12,5 +13,9 @@ RES_NAME_TAKEN = 0
 RES_GAME_CREATED = 1
 RES_GAME_LIST = 2
 
+# connection - some socket object for the message to be sent through
+# id - the ID of the message to tell the receiver what the message is about, i.e. what to do with the data
+# data - some object, such as a string or array
 def sendMSG(connection, id, data):
-    connection.send(str.encode('{"msgId": %d, "data": "%s"}' % (id, data)))
+    outJSON = {"id": id, "data": data}
+    connection.send(str.encode(json.dumps(outJSON)))

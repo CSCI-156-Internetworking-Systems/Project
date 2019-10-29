@@ -2,10 +2,11 @@ import socket
 import json
 from message_constants import *
 
+SERVER_IP = '0.0.0.0' # IP address where the server .py is being run, assumes port 8080
+
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 print(client)
-#client.connect(('192.168.1.72', 8080))
-client.connect(('10.62.79.178', 8080)) # when at Fresno State
+client.connect((SERVER_IP, 8080))
 print("Connected to game server.")
 while True:
     print("What would you like to do?")
@@ -19,11 +20,11 @@ while True:
         from_server = (client.recv(4096)).decode("utf-8")
         print("reseiving ", from_server)
         serverMsg = json.loads(from_server)
-        if serverMsg['msgId'] == RES_GAME_CREATED:
+        if serverMsg['id'] == RES_GAME_CREATED:
             print("Game created, waiting for player to join.")
         else:
             print("Error, game not created.")
     elif userInput == 'j':
-        client.send(str.encode('{"msgId" = %d, "data" = ""}' % (REQ_GAME_LIST)))
+        sendMSG(client, REQ_GAME_LIST, "")
 
 client.close()
