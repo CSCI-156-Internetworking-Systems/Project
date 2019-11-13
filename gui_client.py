@@ -4,17 +4,25 @@ import tkinter as tk
 from tkinter import Tk, Label, Button
 from message_constants import RequestMessageID, ResponseMessageID
 
+class TicTacToe:
+    
+    def __init__(self):
+        self.__board = [
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0]
+        ]
 
 class GameClient(tk.Frame):
     def __init__(self, master):
         super().__init__(master)
-        self.master = master
-        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.peer_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.master          = master
+        self.__server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.__peer_socket   = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.pack()
-        self.create_widgets()
+        self.create_main_screen()
 
-    def create_widgets(self):
+    def create_main_screen(self):
         self.connect_button = tk.Button(self, text='Connect to game server', command=self.connect_to_server)
         self.connect_button.pack()
 
@@ -34,18 +42,18 @@ class GameClient(tk.Frame):
         
     def connect_to_server(self):
         try:
-            self.server_socket.connect(('0.0.0.0', 8080))
+            self.__server_socket.connect(('0.0.0.0', 8080))
             self.info_label['text'] = 'Connected!'
             self.create_gameroom()
-        except ConnectionRefusedError:
-            self.info_label['text'] = 'Unable to connect'
+        except ConnectionRefusedError as error:
+            self.info_label['text'] = 'Unable to connect {}'.format(str(error))
 
     def get_game_list(self):
-        self.server_socket.send(str.encode(json.dumps({
-            'id': RequestMessageID.LIST_GAMES.value,
+        self.__server_socket.send(str.encode(json.dumps({
+            'id': RequestMessageID.LIST_GAMES,
             'data': 'c'
         })))
-        server_response = (self.server_socket.recv(4096)).decode("utf-8")
+        server_response = (self.__server_socket.recv(4096)).decode("utf-8")
         return server_response
 
 root = Tk()

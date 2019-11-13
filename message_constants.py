@@ -1,30 +1,30 @@
 import socket
 import json
-from enum import Enum, unique
+from enum import IntEnum, unique
 
 print("Message Constants Imported!")
 
+class MessageID(IntEnum):
+    pass
+
 # message IDs that come from client:
 @unique
-class RequestMessageID(Enum):
+class RequestMessageID(MessageID):
     LIST_GAMES = 0
     CREATE_GAME = 1
     JOIN_GAME = 2
 
-REQ_GAME_LIST = 0
-REQ_CREATE_GAME = 1
-REQ_JOIN_GAME = 2
-
 # response message IDs:
 @unique
-class ResponseMessageID(Enum):
+class ResponseMessageID(MessageID):
     NAME_TAKEN = 0
     GAME_CREATED = 1
     GAME_LIST = 2
 
-RES_NAME_TAKEN = 0
-RES_GAME_CREATED = 1
-RES_GAME_LIST = 2
+class Message:
+    def __init__(self, message_id: MessageID, body: str):
+        self.__message_id = message_id
+        self.__body       = body
 
 # connection - some socket object for the message to be sent through
 # id - the ID of the message to tell the receiver what the message is about, i.e. what to do with the data
