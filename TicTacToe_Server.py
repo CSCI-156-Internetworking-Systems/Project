@@ -4,7 +4,7 @@ from message_constants import *
 
 # definitions of functions for switch dictionary:
 def Exec_Game_List(mesgData):
-    conn.send(json.dumps(gamesList))
+    conn.send(json.dumps(gamesList).encode('utf-8'))
 
 def Exec_Create_Game(msgData): # msgData in this case will be the name of the game/player being created
     gamesList.append((msgData, addr))
