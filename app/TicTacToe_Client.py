@@ -1,6 +1,6 @@
 import socket
 import json
-from app.message_constants import RequestMessageID, ResponseMessageID, sendMSG
+from message_constants import RequestMessageID, ResponseMessageID, sendMSG
 
 SERVER_IP = '0.0.0.0' # IP address where the server .py is being run, assumes port 8080
 

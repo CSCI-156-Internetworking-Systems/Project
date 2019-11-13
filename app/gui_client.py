@@ -2,7 +2,7 @@ import socket
 import json
 import tkinter as tk
 from tkinter import Tk, Label, Button
-from message_constants import RequestMessageID, ResponseMessageID
+from app.message_constants import RequestMessageID, ResponseMessageID
 
 class TicTacToe:
     
