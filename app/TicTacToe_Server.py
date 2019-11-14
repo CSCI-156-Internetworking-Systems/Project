@@ -1,6 +1,6 @@
 import socket
 import json
-from app.message_constants import RequestMessageID, ResponseMessageID, Message, sendMSG
+from message_constants import RequestMessageID, ResponseMessageID, Message, sendMSG
 
 # definitions of functions for switch dictionary:
 def Exec_Game_List(mesgData):

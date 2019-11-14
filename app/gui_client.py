@@ -2,7 +2,7 @@ import socket
 import json
 import tkinter as tk
 from tkinter import Tk, Label, Button
-from app.message_constants import RequestMessageID, ResponseMessageID
+from message_constants import RequestMessageID, ResponseMessageID, sendMSG
 
 class TicTacToe:
     
@@ -56,7 +56,8 @@ class GameClient(tk.Frame):
         server_response = (self.__server_socket.recv(4096)).decode("utf-8")
         return server_response
 
-root = Tk()
-root.minsize(256, 256)
-gui = GameClient(root)
-root.mainloop()
+if __name__ == '__main__':
+    root = Tk()
+    root.minsize(256, 256)
+    gui = GameClient(root)
+    root.mainloop()
