@@ -3,22 +3,20 @@ import json
 from enum import IntEnum, unique
 from typing import Union, Dict, List
 
-print("Message Constants Imported!")
-
 class MessageID(IntEnum):
     pass
 
 # message IDs that come from client:
 @unique
 class RequestMessageID(MessageID):
-    LIST_GAMES = 0
+    GET_AVAILABLE_GAMES = 0
     CREATE_GAME = 1
     JOIN_GAME = 2
 
 # response message IDs:
 @unique
 class ResponseMessageID(MessageID):
-    NAME_TAKEN = 0
+    LISTING_AVAILABLE_GAMES = 0
     GAME_CREATED = 1
     GAME_LIST = 2
 

@@ -1,34 +1,14 @@
+# Standard library imports
 import socket
 import json
-from message import RequestMessageID, ResponseMessageID, sendMSG
 
-#SERVER_IP = '0.0.0.0' # IP address where the server .py is being run, assumes port 8080
-#
-#client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#print(client)
-#client.connect((SERVER_IP, 8080))
-#print("Connected to game server.")
-#while True:
-#    print("What would you like to do?")
-#    print("c - Create game\nj - Join Game")
-#    userInput = input()
-#    if userInput == 'c':
-#        print("Enter the name of your game to be shown to others:")
-#        userInput = input()
-#
-#        sendMSG(client, RequestMessageID.CREATE_GAME, userInput)
-#        from_server = (client.recv(4096)).decode("utf-8")
-#        print("reseiving ", from_server)
-#        serverMsg = json.loads(from_server)
-#        if serverMsg['id'] == ResponseMessageID.GAME_CREATED:
-#            print("Game created, waiting for player to join.")
-#        else:
-#            print("Error, game not created.")
-#    elif userInput == 'j':
-#        sendMSG(client, RequestMessageID.LIST_GAMES, "")
-#
-#client.close()
-#
+# Third party library imports
+from typing import List, Dict
+
+# Local package imports
+from message import (
+    RequestMessageID, ResponseMessageID, MessageEncoder, MessageDecoder)
+
 class Client():
 
     def __init__(self):
@@ -37,7 +17,7 @@ class Client():
 
     def connectToServer(self, ipAddr, port):
         try:
-            self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.serverSocket.connect((ipAddr, port))
         except Exception as error:
             print(str(error))
@@ -55,5 +35,20 @@ class Client():
         if self.peerSocket is not None:
             self.peerSocket.close()
 
+    def getListOfAvailableGames(self) -> List[Dict]:
+        if self.serverSocket:
+            request = {
+                'id': RequestMessageID.GET_AVAILABLE_GAMES,
+                'body': None
+            }
+            self.serverSocket.send(
+                json.dumps(request, cls=MessageEncoder).encode('utf-8'))
 
+            response = self.serverSocket.recv(4096)
+            response = json.loads(response.decode('utf-8'), cls=MessageDecoder)
 
+            if response['id'] == ResponseMessageID.LISTING_AVAILABLE_GAMES:
+                return response['body']['availableGames']
+            else:
+                raise Exception('Error retrieving list of available games')
+            

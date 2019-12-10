@@ -17,8 +17,10 @@ class GameGUI(tk.Frame):
     def __init__(self, master):
         super().__init__(master)
         self.master = master
+        self.mainFrame = tk.Frame(self)
         self.client = Client()
         self.pack()
+        self.mainFrame.pack()
         self.createMainScreen()
 
 
@@ -26,25 +28,25 @@ class GameGUI(tk.Frame):
         """ Creates the main screen when the GUI is launched allowing the user
         to connect to a game server with an IP Address and Port of their choice.
         """
-        entryFrame = tk.Frame(self)
-        ipLabel    = tk.Label(entryFrame, text='IP:')
-        portLabel  = tk.Label(entryFrame, text='Port:')
-        ipEntry    = tk.Entry(entryFrame)
-        portEntry  = tk.Entry(entryFrame)
+        entryFrame = tk.Frame(self.mainFrame)
+        serverIpLabel   = tk.Label(entryFrame, text='Server IP:')
+        serverPortLabel = tk.Label(entryFrame, text='Server Port:')
+        serverIpEntry   = tk.Entry(entryFrame)
+        serverPortEntry = tk.Entry(entryFrame)
         entryFrame.pack()
-        ipLabel.grid(row=0, column=0)
-        ipEntry.grid(row=0, column=1)
-        portLabel.grid(row=1, column=0)
-        portEntry.grid(row=1, column=1)
+        serverIpLabel.grid(row=0, column=0)
+        serverIpEntry.grid(row=0, column=1)
+        serverPortLabel.grid(row=1, column=0)
+        serverPortEntry.grid(row=1, column=1)
 
-        buttonFrame   = tk.Frame(self)
+        buttonFrame   = tk.Frame(self.mainFrame)
         connectButton = tk.Button(buttonFrame, text='Connect')
         quitButton    = tk.Button(buttonFrame, text='QUIT', command=self.onQuit)
         buttonFrame.pack()
         connectButton.pack()
         quitButton.pack()
 
-        errorMsgFrame = tk.Frame(self)
+        errorMsgFrame = tk.Frame(self.mainFrame)
         errorMsgLabel = tk.Label(errorMsgFrame)
         errorMsgFrame.pack()
         errorMsgLabel.pack()
@@ -56,15 +58,15 @@ class GameGUI(tk.Frame):
             def onError(errorMsg=''):
                 errorMsgLabel['text'] = errorMsg
 
-            if ipEntry.get() and portEntry.get():
-                self.connectToGameServer(ipEntry.get(),
-                                         int(portEntry.get()),
-                                         onSuccess,
-                                         onError)
+            serverIP   = serverIpEntry.get()
+            serverPort = serverPortEntry.get()
+
+            if serverIP and serverPort:
+                self.connectToGameServer(serverIP, int(serverPort), onSuccess, onError)
             else:
                 onError('IP Address or Port number missing')
 
-        connectButton['command'] = onConnectButtonPressed;
+        connectButton['command'] = onConnectButtonPressed
 
 
     def createGameRoomScreen(self):
@@ -74,8 +76,31 @@ class GameGUI(tk.Frame):
         to join one of the available games or play agains the game server.
         """
         # Clear screen and deallocate all previous widgets
-        for widget in self.master.winfo_children():
-            widget.destroy()
+        if self.mainFrame is not None:
+            self.mainFrame.destroy()
+            self.mainFrame = tk.Frame(self)
+            self.mainFrame.pack()
+
+        menuBar         = tk.Frame(self.mainFrame)
+        playComputerBtn = tk.Button(menuBar, text='Play computer')
+        quitBtn         = tk.Button(menuBar, text='Quit', command=self.onQuit)
+        menuBar.pack()
+        playComputerBtn.grid(row=0, column=0)
+        quitBtn.grid(row=0, column=1)
+
+        errorMsgFrame = tk.Frame(self.mainFrame)
+        errorMsgLabel = tk.Label(errorMsgFrame)
+        errorMsgFrame.pack()
+        errorMsgLabel.pack()
+
+        try:
+            availableGames = self.client.getListOfAvailableGames()
+        except Exception as error:
+            errorMsgLabel['text'] = str(error)
+            return
+
+        for game in availableGames:
+            print(game)
 
 
     def connectToGameServer(self, ipAddr: str, port: int, onSuccess: Callable, onError: Callable[[str], None]):
