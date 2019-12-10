@@ -79,7 +79,8 @@ class GameGUI(tk.Frame):
 
 
     def connectToGameServer(self, ipAddr: str, port: int, onSuccess: Callable, onError: Callable[str]) -> None:
-        """
+        """ Connect to game server.
+        
         Arguments:
         ----------
         ipAddr    - IP Address of game server
