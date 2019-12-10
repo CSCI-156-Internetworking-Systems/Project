@@ -78,7 +78,7 @@ class GameGUI(tk.Frame):
             widget.destroy()
 
 
-    def connectToGameServer(self, ipAddr: str, port: int, onSuccess: Callable, onError: Callable[str]) -> None:
+    def connectToGameServer(self, ipAddr: str, port: int, onSuccess: Callable, onError: Callable[[str], None]):
         """
         Arguments:
         ----------
