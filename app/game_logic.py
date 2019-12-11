@@ -1,14 +1,14 @@
-#from os import system
+from os import system
 class TicTacToe:
     
-	def __init__(self,myNewName,newOpponentsName,startingTurnPlayer):
+	def __init__(self, myNewName, newOpponentsName, startingTurnPlayer):
 		self.__board = [
 			[0, 0, 0],
 			[0, 0, 0],
 			[0, 0, 0]
 		]
-        self.__myName = myNewName
-        self.__opName = newOpponentsName
+		self.__myName = myNewName
+		self.__opName = newOpponentsName
 		self.__turnPlayer = startingTurnPlayer
 #	def __str__(self):
 #		ret = ""
@@ -27,15 +27,15 @@ class TicTacToe:
 	def getBoard(self):
 		return self.__board
 	def makeMove(self, position, attemptedTurnPlayer):
-		if (self.__turnPlayer == attemptedTurnPlayer):
+		if (self.__turnPlayer != attemptedTurnPlayer):
 			return False
-#		index = (3 * position.x) + position.y
-		if (index < 0) | (index > 8):
+#		index = (3 * position[0]) + position[1]
+		if (position[0] < 0) | (position[0] > 2) | (position[1] < 0) | (position[1] > 2):
 			return False
 #		if self.__board[int(index / 3)][index % 3] == 0:
 #			self.__board[int(index / 3)][index % 3] = self.__turnPlayer
-		if self.__board[position.x][position.y] == 0:
-			self.__board[position.x][position.x] = self.__turnPlayer
+		if self.__board[position[0]][position[1]] == 0:
+			self.__board[position[0]][position[1]] = self.__turnPlayer
 			self.__turnPlayer = self.__myName if self.__turnPlayer == self.__opName else self.__opName
 			return True
 		return False
@@ -45,6 +45,14 @@ class TicTacToe:
 		for row in self.__board:
 			if ((row[0] == row[1]) & (row[1] == row[2]) & (row[0] != 0)):
 				return row[0]
+
+		if ((self.__board[0][0] == self.__board[1][0]) & (self.__board[1][0] == self.__board[2][0]) & (self.__board[0][0] != 0)):
+			return self.__board[0][0]
+		if ((self.__board[0][1] == self.__board[1][1]) & (self.__board[1][1] == self.__board[2][1]) & (self.__board[0][1] != 0)):
+			return self.__board[0][1]
+		if ((self.__board[0][2] == self.__board[1][2]) & (self.__board[1][2] == self.__board[2][2]) & (self.__board[0][2] != 0)):
+			return self.__board[0][2]
+
 		if ((self.__board[0][0] == self.__board[1][1]) & (self.__board[1][1] == self.__board[2][2]) & (self.__board[0][0] != 0)):
 			return self.__board[0][0]
 		if ((self.__board[0][2] == self.__board[1][1]) & (self.__board[1][1] == self.__board[2][0]) & (self.__board[0][2] != 0)):
@@ -52,6 +60,9 @@ class TicTacToe:
 		return 0
 
 
+#board = TicTacToe(1, 2, 1)
+#board.makeMove((3,-4),1)
+#print(board.getBoard())
 #board = TicTacToe(1)
 ##board.makeMove(0,"X")
 #system('clear')
