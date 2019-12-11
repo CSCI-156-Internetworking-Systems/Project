@@ -261,12 +261,13 @@ class GameGUI(tk.Frame):
             elif not self.client.ticTacToe.hasPossibleMoves():
                 self.onStaleMate(infoLabel)
             else:
-                self.getServerMove()
-                infoLabel['text'] = self.client.ticTacToe.getTurnPlayer() + "'s turn" 
-                if self.client.ticTacToe.checkWinCondition():
-                    self.onHasWinner(self.client.ticTacToe.checkWinCondition(), infoLabel)
-                elif not self.client.ticTacToe.hasPossibleMoves():
-                    self.onStaleMate(infoLabel)
+                if self.client.opponentName == 'server':
+                    self.getServerMove()
+                    infoLabel['text'] = self.client.ticTacToe.getTurnPlayer() + "'s turn" 
+                    if self.client.ticTacToe.checkWinCondition():
+                        self.onHasWinner(self.client.ticTacToe.checkWinCondition(), infoLabel)
+                    elif not self.client.ticTacToe.hasPossibleMoves():
+                        self.onStaleMate(infoLabel)
 
         for row in range(0, 3):
             for col in range(0, 3):

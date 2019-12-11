@@ -28,7 +28,7 @@ class Client():
 
         self.requestHandlers = {
             RequestMessageID.JOIN_GAME: self.onRequestJoinGame,
-            # RequestMessageID.MAKE_MOVE: self.onRequestMakeMove,
+            RequestMessageID.MAKE_MOVE: self.onRequestMakeMove,
             # RequestMessageID.GET_MOVE: self.onRequestGetMove,
             # RequestMessageID.END_GAME: self.onRequestEndGame,
             # RequestMessageID.LEAVE_SERVER: self.onRequestLeaveServer
@@ -168,10 +168,11 @@ class Client():
 
         if opponentName == 'server':
             self.serverSocket.send(request)
+            response = self.serverSocket.recv(4096)
         else:
             self.peerSocket.send(request)
+            response = self.peerSocket.recv(4096)
 
-        response = self.serverSocket.recv(4096)
         response = json.loads(response.decode('utf-8'), cls=MessageDecoder) 
 
         if response['id'] == ResponseMessageID.MAKE_MOVE_SUCCESS:
@@ -254,3 +255,22 @@ class Client():
             self.connection.send(response)
             self.p2pJoinGameCallback()
             return
+
+    def onRequestMakeMove(self, requestParams):
+        response = {}
+        try:
+            opponentName = requestParams['nickname']
+            opponentMove = requestParams['move']
+        except KeyError as error:
+            response['id'] = ResponseMessageID.MAKE_MOVE_ERROR
+            response['body'] = { 'error': str(error) }
+        else:
+            if self.ticTacToe.makeMove(opponentMove, opponentName):
+                response['id'] = ResponseMessageID.MAKE_MOVE_SUCCESS
+                response['body'] = None
+            else:
+                response['id'] = ResponseMessageID.MAKE_MOVE_ERROR
+                response['body'] = { 'error': 'Invalid move' }
+
+        response = json.dumps(response, cls=MessageEncoder).encode('utf-8')
+        self.connection.send(response)
