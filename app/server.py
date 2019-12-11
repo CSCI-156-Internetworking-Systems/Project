@@ -12,14 +12,19 @@ gameBoards = {}
 
 class ClientThread(threading.Thread):
 
-    def __init__(self, clientConnection):
+    def __init__(self, clientConnection, clientAddress):
         threading.Thread.__init__(self)
         self.connection = clientConnection
+        self.ipAddress  = clientConnection
+
         self.requestHandlers = {
             RequestMessageID.JOIN_SERVER:  self.onRequestJoinServer,
             RequestMessageID.GET_AVAILABLE_GAMES:  self.onRequestAvailbaleGames,
             RequestMessageID.JOIN_GAME: self.onRequestJoinGame,
             RequestMessageID.MAKE_MOVE: self.onRequestMakeMove,
+            RequestMessageID.GET_MOVE: self.onRequestGetMove,
+            RequestMessageID.END_GAME: self.onRequestEndGame,
+            RequestMessageID.LEAVE_SERVER: self.onRequestLeaveServer
         }
 
     def run(self):
@@ -47,7 +52,7 @@ class ClientThread(threading.Thread):
                 response['id'] = ResponseMessageID.JOIN_SERVER_ERROR
                 response['body'] = { 'error': 'Nickname already exists' }
             else:
-                gameList[nickname] = p2pPort
+                gameList[nickname] = { 'ip': self.ipAddress, 'port': p2pPort }
                 response['id'] = ResponseMessageID.JOIN_SERVER_SUCCESS
                 response['body'] = None
 
@@ -64,9 +69,9 @@ class ClientThread(threading.Thread):
             response['id']   = ResponseMessageID.GET_AVAILABLE_GAMES_ERROR
             response['body'] = { 'error': str(error) }
         else:
-            availableGames = [{'nickname': nickname, 'p2pPort': p2pPort}
-                            for nickname, p2pPort in gameList.items()
-                            if nickname != requesterNickname] 
+            availableGames = [{'nickname': key, 'ip': value['ip'], 'port': value['port']}
+                            for key, value in gameList.items()
+                            if key != requesterNickname] 
             response['id'] = ResponseMessageID.GET_AVAILABLE_GAMES_SUCCESS
             response['body'] = { 'availableGames': availableGames }
 
@@ -158,7 +163,7 @@ while True:
     server.listen(1)
     connection, address = server.accept()
     print('recieved request...')
-    requestHandlerThread = ClientThread(connection)
+    requestHandlerThread = ClientThread(connection, address)
     print('created thread to handle request...')
     requestHandlerThread.start()
     print('handling request in separate thread')
