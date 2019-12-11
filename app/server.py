@@ -15,7 +15,7 @@ class ClientThread(threading.Thread):
     def __init__(self, clientConnection, clientAddress):
         threading.Thread.__init__(self)
         self.connection = clientConnection
-        self.ipAddress  = clientConnection
+        self.ipAddress  = clientAddress[0]
 
         self.requestHandlers = {
             RequestMessageID.JOIN_SERVER:  self.onRequestJoinServer,
