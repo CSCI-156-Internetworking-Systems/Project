@@ -11,8 +11,11 @@ class MessageID(IntEnum):
 class RequestMessageID(MessageID):
     JOIN_SERVER = 0
     GET_AVAILABLE_GAMES = 1
-    CREATE_GAME = 2
-    JOIN_GAME = 3
+    JOIN_GAME = 2
+    MAKE_MOVE = 3
+    GET_MOVE = 4
+    END_GAME = 5
+    LEAVE_SERVER = 6
 
 # response message IDs:
 @unique
@@ -21,8 +24,14 @@ class ResponseMessageID(MessageID):
     JOIN_SERVER_ERROR = 1
     GET_AVAILABLE_GAMES_SUCCESS = 2
     GET_AVAILABLE_GAMES_ERROR = 3
-    GAME_CREATED = 5
-    GAME_LIST = 6
+    JOIN_GAME_SUCCESS = 4
+    JOIN_GAME_ERROR = 5
+    MAKE_MOVE_SUCCESS = 6
+    MAKE_MOVE_ERROR = 7
+    GET_MOVE_SUCCESS = 8
+    GET_MOVE_ERROR = 9
+    END_GAME_ACK = 10
+    LEAVE_SERVER_ACK = 11
 
 
 class Message:

@@ -1,11 +1,14 @@
 import socket
 import threading
 import json
+import random
 from message import (
     RequestMessageID, ResponseMessageID, Message, MessageEncoder, MessageDecoder, sendMSG)
+from game_logic import TicTacToe
 
 # list of all connected players waiting for a second player to join them:
-gameList = {} 
+gameList = {}
+gameBoards = {}
 
 class ClientThread(threading.Thread):
 
@@ -14,7 +17,9 @@ class ClientThread(threading.Thread):
         self.connection = clientConnection
         self.requestHandlers = {
             RequestMessageID.JOIN_SERVER:  self.onRequestJoinServer,
-            RequestMessageID.GET_AVAILABLE_GAMES:  self.onRequestAvailbaleGames
+            RequestMessageID.GET_AVAILABLE_GAMES:  self.onRequestAvailbaleGames,
+            RequestMessageID.JOIN_GAME: self.onRequestJoinGame,
+            RequestMessageID.MAKE_MOVE: self.onRequestMakeMove,
         }
 
     def run(self):
@@ -65,6 +70,81 @@ class ClientThread(threading.Thread):
             response['id'] = ResponseMessageID.GET_AVAILABLE_GAMES_SUCCESS
             response['body'] = { 'availableGames': availableGames }
 
+        response = json.dumps(response, cls=MessageEncoder).encode('utf-8')
+        self.connection.send(response)
+
+
+    def onRequestJoinGame(self, requestParams):
+        response = {}
+        try:
+            opponentName  = requestParams['nickname']
+            opponentGuess = int(requestParams['guess'])
+        except KeyError as error:
+            response['id'] = ResponseMessageID.JOIN_GAME_ERROR
+            response['body'] = { 'error': str(error) }
+        else:
+            startPlayer = 'server' if random.random() > opponentGuess else opponentName
+            gameBoards[opponentName] = TicTacToe('server', opponentName, startPlayer)
+            response['id'] = ResponseMessageID.JOIN_GAME_SUCCESS
+            response['body'] = { 'startPlayer': startPlayer }
+
+        response = json.dumps(response, cls=MessageEncoder).encode('utf-8')
+        self.connection.send(response)
+
+    
+    def onRequestMakeMove(self, requestParams):
+        response = {}
+        try:
+            opponentName = requestParams['nickname']
+            opponentMove = requestParams['move']
+        except KeyError as error:
+            response['id'] = ResponseMessageID.MAKE_MOVE_ERROR
+            response['body'] = { 'error': str(error) }
+        else:
+            gameBoard = gameBoards[opponentName]
+            if gameBoard.makeMove(opponentMove, opponentName):
+                response['id'] = ResponseMessageID.MAKE_MOVE_SUCCESS
+                response['body'] = None
+            else:
+                response['id'] = ResponseMessageID.MAKE_MOVE_ERROR
+                response['body'] = { 'error': 'Invalid move' }
+
+        response = json.dumps(response, cls=MessageEncoder).encode('utf-8')
+        self.connection.send(response)
+
+    
+    def onRequestGetMove(self, requestParams):
+        response = {}
+        try:
+            opponentName = requestParams['nickname']
+        except KeyError as error:
+            response['id'] = ResponseMessageID.GET_MOVE_ERROR
+            response['body'] = { 'error': str(error) }
+        else:
+            gameBoard = gameBoards[opponentName]
+            move = (random.randint(0, 2), random.randint(0, 2))
+            while not gameBoard.makeMove(move, 'server'):
+                move = (random.randint(0, 2), random.randint(0, 2))
+
+            response['id'] = ResponseMessageID.GET_MOVE_SUCCESS
+            response['body'] = { 'nickname': 'server', 'move': move }
+            response = json.dumps(response, cls=MessageEncoder).encode('utf-8')
+            self.connection.send(response)
+
+        
+    def onRequestEndGame(self, requestParams):
+        opponentName = requestParams.get('nickname', None)
+        gameBoards.pop(opponentName, None)
+        response = { 'id': ResponseMessageID.END_GAME_ACK, 'body': None }
+        response = json.dumps(response, cls=MessageEncoder).encode('utf-8')
+        self.connection.send(response)
+
+
+    def onRequestLeaveServer(self, requestParams):
+        opponentName = requestParams.get('nickname', None)
+        gameBoards.pop(opponentName, None)
+        gameList.pop(opponentName, None)
+        response = { 'id': ResponseMessageID.LEAVE_SERVER_ACK, 'body': None }
         response = json.dumps(response, cls=MessageEncoder).encode('utf-8')
         self.connection.send(response)
 
