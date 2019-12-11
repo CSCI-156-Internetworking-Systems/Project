@@ -117,7 +117,7 @@ class Client():
         response = json.loads(response.decode('utf-8'), cls=MessageDecoder)
 
         if response['id'] == ResponseMessageID.JOIN_GAME_SUCCESS:
-            startPlayer = response['startPlayer']
+            startPlayer = response['body']['startPlayer']
             self.ticTacToe = TicTacToe(self.nickname, opponentName, startPlayer)
             return startPlayer
         else:
@@ -127,6 +127,7 @@ class Client():
     def makeMove(self, opponentName, move):
         request = { 'id': RequestMessageID.MAKE_MOVE }
         request['body'] = { 'nickname': self.nickname, 'move': move }
+        request = json.dumps(request, cls=MessageEncoder).encode('utf-8')
 
         if opponentName == 'server':
             self.serverSocket.send(request)
@@ -158,6 +159,7 @@ class Client():
         if response['id'] == ResponseMessageID.GET_MOVE_SUCCESS:
             move = response['body']['move'] 
             self.ticTacToe.makeMove(move, opponentName)
+            return move
         else:
             raise Exception(response['body']['error'])
 
@@ -180,20 +182,19 @@ class Client():
             self.ticTacToe = None
 
 
-    def leaveServer(self, opponentName):
+    def leaveServer(self):
         request = { 'id': RequestMessageID.LEAVE_SERVER }
         request['body'] = { 'nickname': self.nickname }
         request = json.dumps(request, cls=MessageEncoder).encode('utf-8')
 
-        if opponentName == 'server':
-            self.serverSocket.send(request)
-        else:
+        if self.peerSocket:
             self.peerSocket.send(request)
+        self.serverSocket.send(request)
 
-        response = self.serverSocket.recv(4096)
-        response = json.loads(response.decode('utf-8'), cls=MessageDecoder)
+        # response = self.serverSocket.recv(4096)
+        # response = json.loads(response.decode('utf-8'), cls=MessageDecoder)
 
-        if response['id'] == ResponseMessageID.END_GAME_ACK:
-            self.ticTacToe = None
-            self.closePeerConnection()
-            self.closeServerConnection()
+        # if response['id'] == ResponseMessageID.END_GAME_ACK:
+        self.ticTacToe = None
+        self.closePeerConnection()
+        self.closeServerConnection()

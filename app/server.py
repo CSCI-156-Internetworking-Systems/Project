@@ -83,12 +83,17 @@ class ClientThread(threading.Thread):
         response = {}
         try:
             opponentName  = requestParams['nickname']
-            opponentGuess = int(requestParams['guess'])
+            opponentGuess = float(requestParams['guess'])
         except KeyError as error:
             response['id'] = ResponseMessageID.JOIN_GAME_ERROR
             response['body'] = { 'error': str(error) }
         else:
-            startPlayer = 'server' if random.random() > opponentGuess else opponentName
+            serverGuess = random.random()
+            if serverGuess > opponentGuess:
+                startPlayer = 'server'
+            else:
+                startPlayer = opponentName
+
             gameBoards[opponentName] = TicTacToe('server', opponentName, startPlayer)
             response['id'] = ResponseMessageID.JOIN_GAME_SUCCESS
             response['body'] = { 'startPlayer': startPlayer }
