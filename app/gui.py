@@ -31,13 +31,21 @@ class GameGUI(tk.Frame):
         entryFrame = tk.Frame(self.mainFrame)
         serverIpLabel   = tk.Label(entryFrame, text='Server IP:')
         serverPortLabel = tk.Label(entryFrame, text='Server Port:')
+        nicknameLabel   = tk.Label(entryFrame, text='Nickname:')
+        p2pPortLabel    = tk.Label(entryFrame, text='P2P Port:')
         serverIpEntry   = tk.Entry(entryFrame)
         serverPortEntry = tk.Entry(entryFrame)
+        nicknameEntry   = tk.Entry(entryFrame)
+        p2pPortEntry    = tk.Entry(entryFrame)
         entryFrame.pack()
         serverIpLabel.grid(row=0, column=0)
         serverIpEntry.grid(row=0, column=1)
         serverPortLabel.grid(row=1, column=0)
         serverPortEntry.grid(row=1, column=1)
+        nicknameLabel.grid(row=2, column=0)
+        nicknameEntry.grid(row=2, column=1)
+        p2pPortLabel.grid(row=3, column=0)
+        p2pPortEntry.grid(row=3, column=1)
 
         buttonFrame   = tk.Frame(self.mainFrame)
         connectButton = tk.Button(buttonFrame, text='Connect')
@@ -60,11 +68,14 @@ class GameGUI(tk.Frame):
 
             serverIP   = serverIpEntry.get()
             serverPort = serverPortEntry.get()
+            nickname   = nicknameEntry.get()
+            p2pPort    = p2pPortEntry.get()
 
-            if serverIP and serverPort:
+            if serverIP and serverPort and nicknameEntry and p2pPort:
                 self.connectToGameServer(serverIP, int(serverPort), onSuccess, onError)
+                self.joinGameServer(nickname, int(p2pPort), onSuccess, onError)
             else:
-                onError('IP Address or Port number missing')
+                onError('All fields are required')
 
         connectButton['command'] = onConnectButtonPressed
 
@@ -104,7 +115,8 @@ class GameGUI(tk.Frame):
 
 
     def connectToGameServer(self, ipAddr: str, port: int, onSuccess: Callable, onError: Callable[[str], None]):
-        """
+        """ Connect to game server.
+
         Arguments:
         ----------
         ipAddr    - IP Address of game server
@@ -118,6 +130,17 @@ class GameGUI(tk.Frame):
             onError(str(error))
         else:
             onSuccess()
+
+    
+    def joinGameServer(self, nickname: str, p2pPort: int, onSuccess: Callable, onError: Callable[[str], None]):
+        try:
+            self.client.joinServer(nickname, p2pPort)
+        except Exception as error:
+            # onError(str(error))
+            pass
+        else:
+            onSuccess()
+
 
     def onQuit(self):
         """ Close all socket connections and close GUI. """

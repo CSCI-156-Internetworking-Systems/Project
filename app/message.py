@@ -9,16 +9,20 @@ class MessageID(IntEnum):
 # message IDs that come from client:
 @unique
 class RequestMessageID(MessageID):
-    GET_AVAILABLE_GAMES = 0
-    CREATE_GAME = 1
-    JOIN_GAME = 2
+    JOIN_SERVER = 0
+    GET_AVAILABLE_GAMES = 1
+    CREATE_GAME = 2
+    JOIN_GAME = 3
 
 # response message IDs:
 @unique
 class ResponseMessageID(MessageID):
-    LISTING_AVAILABLE_GAMES = 0
-    GAME_CREATED = 1
-    GAME_LIST = 2
+    JOIN_SERVER_SUCCESS = 0
+    JOIN_SERVER_ERROR = 1
+    GET_AVAILABLE_GAMES_SUCCESS = 2
+    GET_AVAILABLE_GAMES_ERROR = 3
+    GAME_CREATED = 5
+    GAME_LIST = 6
 
 
 class Message:
