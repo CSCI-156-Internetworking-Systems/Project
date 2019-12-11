@@ -21,7 +21,7 @@ class GameGUI(tk.Frame):
         super().__init__(master)
         self.master = master
         self.mainFrame = tk.Frame(self)
-        self.client = Client()
+        self.client = Client(self.onPeerRequestJoinGame)
         self.btnGrid = [[None, None, None],
                         [None, None, None],
                         [None, None, None]]
@@ -162,6 +162,13 @@ class GameGUI(tk.Frame):
     
 
     def updateListOfAvailableGames(self):
+        def onError(errorMsg):
+            error = tk.Label(self.mainFrame, text=errorMsg)
+            error.pack()
+
+        def onJoinGamePressed(opponentName, opponentIP, opponentPort):
+            self.playAgainstPeer(opponentName, opponentIP, opponentPort, onError)
+
         def onSuccess(availableGames):
             if self.availableGamesFrame:
                 self.availableGamesFrame.destroy()
@@ -175,10 +182,8 @@ class GameGUI(tk.Frame):
                 joinGameBtn  = tk.Button(self.availableGamesFrame, text='Join') 
                 opponentName.grid(row=1, column=0)
                 joinGameBtn.grid(row=1, column=1)
+                joinGameBtn['command'] = partial(onJoinGamePressed, game['nickname'], game['ip'], game['port'])
 
-        def onError(errorMsg):
-            error = tk.Label(self.mainFrame, text=errorMsg)
-            error.pack()
 
         self.getListOfAvailableGames(onSuccess, onError)
         self.updateJob = self.after(5000, self.updateListOfAvailableGames)
@@ -196,6 +201,25 @@ class GameGUI(tk.Frame):
             self.createTicTacToeScreen()
             if self.client.ticTacToe.getTurnPlayer() == 'server':
                 self.getServerMove()
+
+
+    def playAgainstPeer(self, name, ip, port, onError):
+        if self.updateJob is not None:
+            self.after_cancel(self.updateJob)
+        try:
+            self.client.joinGame(name, ip, port)
+        except Exception as error:
+            onError(str(error))
+        else:
+            self.opponent = name
+            self.createTicTacToeScreen()
+
+
+    def onPeerRequestJoinGame(self):
+        if self.updateJob is not None:
+            self.after_cancel(self.updateJob)
+        self.opponent = self.client.opponentName
+        self.createTicTacToeScreen()
 
 
     def createTicTacToeScreen(self):

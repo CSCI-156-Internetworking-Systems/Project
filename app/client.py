@@ -2,6 +2,7 @@
 import socket
 import json
 import random
+import threading
 
 # Third party library imports
 from typing import List, Dict
@@ -14,12 +15,24 @@ from game_logic import TicTacToe
 
 class Client():
 
-    def __init__(self):
+    def __init__(self, p2pJoinGameCallback):
         self.serverSocket = None
         self.peerSocket = None
         self.nickname = None
+        self.opponentName = None
         self.p2pPort = None
         self.ticTacToe = None
+        self.server = None
+        self.serverThread = None
+        self.p2pJoinGameCallback = p2pJoinGameCallback
+
+        self.requestHandlers = {
+            RequestMessageID.JOIN_GAME: self.onRequestJoinGame,
+            # RequestMessageID.MAKE_MOVE: self.onRequestMakeMove,
+            # RequestMessageID.GET_MOVE: self.onRequestGetMove,
+            # RequestMessageID.END_GAME: self.onRequestEndGame,
+            # RequestMessageID.LEAVE_SERVER: self.onRequestLeaveServer
+        }
 
 
     def connectToServer(self, ipAddr, port):
@@ -38,7 +51,7 @@ class Client():
             self.peerSocket.connect((ipAddr, port))
         except Exception as error:
             print(str(error))
-            self.serverSocket = None
+            self.peerSocket = None
             raise error 
 
 
@@ -71,11 +84,33 @@ class Client():
             if response['id'] == ResponseMessageID.JOIN_SERVER_SUCCESS:
                 self.nickname = nickname
                 self.p2pPort = p2pPort
+                self.serverThread = threading.Thread(target=self.startP2PServer)
+                self.serverThread.start()
             else:
                 raise  Exception(response['body']['error'])
         else:
             raise Exception('Error: not connected to server')
 
+
+    def startP2PServer(self):
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server.bind(('127.0.0.1', self.p2pPort))
+        print("P2P server started")
+        print("Waiting for peer request..")
+        while True:
+            self.server.listen(1)
+            self.connection, _ = self.server.accept()
+            print('recieved request...')
+            while True:
+                data = self.connection.recv(4096)
+                if not data:
+                    break
+                request = json.loads(data.decode("utf-8"), cls=MessageDecoder)
+                print("---Client Message---")
+                print(request)
+                print("--------------------")
+                self.requestHandlers[request['id']](request['body'])
 
     def getListOfAvailableGames(self) -> List[Dict]:
         if self.serverSocket:
@@ -112,8 +147,8 @@ class Client():
                 raise Exception('Error: unable to connect to peer')
             else:
                 self.peerSocket.send(request)
+                response = self.peerSocket.recv(4096)
 
-        response = self.serverSocket.recv(4096)
         response = json.loads(response.decode('utf-8'), cls=MessageDecoder)
 
         if response['id'] == ResponseMessageID.JOIN_GAME_SUCCESS:
@@ -198,3 +233,31 @@ class Client():
         self.ticTacToe = None
         self.closePeerConnection()
         self.closeServerConnection()
+
+
+    def onRequestJoinGame(self, requestParams):
+        response = {}
+        try:
+            opponentName  = requestParams['nickname']
+            opponentGuess = float(requestParams['guess'])
+        except KeyError as error:
+            response['id'] = ResponseMessageID.JOIN_GAME_ERROR
+            response['body'] = { 'error': str(error) }
+            response = json.dumps(response, cls=MessageEncoder).encode('utf-8')
+            self.connection.send(response)
+            return
+        else:
+            self.opponentName = opponentName
+            serverGuess = random.random()
+            if serverGuess > opponentGuess:
+                startPlayer = self.nickname
+            else:
+                startPlayer = opponentName
+
+            self.ticTacToe = TicTacToe(self.nickname, opponentName, startPlayer)
+            response['id'] = ResponseMessageID.JOIN_GAME_SUCCESS
+            response['body'] = { 'startPlayer': startPlayer }
+            response = json.dumps(response, cls=MessageEncoder).encode('utf-8')
+            self.connection.send(response)
+            self.p2pJoinGameCallback()
+            return
