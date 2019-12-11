@@ -39,7 +39,6 @@ class ClientThread(threading.Thread):
             response['body'] = { 'error': str(error) }
         else:
             if nickname in gameList:
-                print('gameList', gameList)
                 response['id'] = ResponseMessageID.JOIN_SERVER_ERROR
                 response['body'] = { 'error': 'Nickname already exists' }
             else:

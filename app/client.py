@@ -56,9 +56,10 @@ class Client():
             if response['id'] == ResponseMessageID.JOIN_SERVER_SUCCESS:
                 self.nickname = nickname
                 self.p2pPort = p2pPort
-                return 
-
-        raise  Exception(response['body']['error'])
+            else:
+                raise  Exception(response['body']['error'])
+        else:
+            raise Exception('Error: not connected to server')
 
     def getListOfAvailableGames(self) -> List[Dict]:
         if self.serverSocket:

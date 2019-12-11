@@ -72,7 +72,7 @@ class GameGUI(tk.Frame):
             p2pPort    = p2pPortEntry.get()
 
             if serverIP and serverPort and nicknameEntry and p2pPort:
-                self.connectToGameServer(serverIP, int(serverPort), onSuccess, onError)
+                self.connectToGameServer(serverIP, int(serverPort), lambda: None, onError)
                 self.joinGameServer(nickname, int(p2pPort), onSuccess, onError)
             else:
                 onError('All fields are required')
@@ -91,6 +91,11 @@ class GameGUI(tk.Frame):
             self.mainFrame.destroy()
             self.mainFrame = tk.Frame(self)
             self.mainFrame.pack()
+
+        welcomeBanner    = tk.Frame(self.mainFrame)
+        welcomeBannerMsg = tk.Label(welcomeBanner, text='Welcome {}'.format(self.client.nickname))
+        welcomeBanner.pack()
+        welcomeBannerMsg.pack()
 
         menuBar         = tk.Frame(self.mainFrame)
         playComputerBtn = tk.Button(menuBar, text='Play computer')
@@ -136,8 +141,7 @@ class GameGUI(tk.Frame):
         try:
             self.client.joinServer(nickname, p2pPort)
         except Exception as error:
-            # onError(str(error))
-            pass
+            onError(str(error))
         else:
             onSuccess()
 
