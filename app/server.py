@@ -1,4 +1,5 @@
 import socket
+import threading
 import json
 from message import (
     RequestMessageID, ResponseMessageID, Message, MessageEncoder, MessageDecoder, sendMSG)
@@ -6,79 +7,79 @@ from message import (
 # list of all connected players waiting for a second player to join them:
 gameList = {} 
 
-# definitions of functions for switch dictionary:
-def Exec_Create_Game(msgData): # msgData in this case will be the name of the game/player being created
-    # gameList.append((msgData, addr))
-    # print("Games: ", gameList)
-    # sendMSG(conn, ResponseMessageID.GAME_CREATED, "") # no data, this is essentially just an ACK response
-    pass
+class ClientThread(threading.Thread):
 
-def Exec_Join_Game(msgData):
-    pass
+    def __init__(self, clientConnection):
+        threading.Thread.__init__(self)
+        self.connection = clientConnection
+        self.requestHandlers = {
+            RequestMessageID.JOIN_SERVER:  self.onRequestJoinServer,
+            RequestMessageID.GET_AVAILABLE_GAMES:  self.onRequestAvailbaleGames
+        }
 
-def onRequestJoinServer(requestParams):
-    response = {}
-    try:
-        nickname = requestParams['nickname']
-        p2pPort  = requestParams['p2pPort']
-    except KeyError as error:
-        response['id'] = ResponseMessageID.JOIN_SERVER_ERROR
-        response['body'] = { 'error': str(error) }
-    else:
-        if nickname in gameList:
+    def run(self):
+        while True:
+            data = self.connection.recv(4096)
+            if not data:
+                break
+            request = json.loads(data.decode("utf-8"), cls=MessageDecoder)
+            print("---Client Message---")
+            print(request)
+            print("--------------------")
+            self.requestHandlers[request['id']](request['body'])
+
+    def onRequestJoinServer(self, requestParams):
+        response = {}
+        print('gameList', gameList)
+        try:
+            nickname = requestParams['nickname']
+            p2pPort  = requestParams['p2pPort']
+        except KeyError as error:
             response['id'] = ResponseMessageID.JOIN_SERVER_ERROR
-            response['body'] = { 'error': 'Nickname already exists' }
+            response['body'] = { 'error': str(error) }
         else:
-            gameList[nickname] = p2pPort
-            response['id'] = ResponseMessageID.JOIN_SERVER_SUCCESS
-            response['body'] = None
+            if nickname in gameList:
+                print('gameList', gameList)
+                response['id'] = ResponseMessageID.JOIN_SERVER_ERROR
+                response['body'] = { 'error': 'Nickname already exists' }
+            else:
+                gameList[nickname] = p2pPort
+                response['id'] = ResponseMessageID.JOIN_SERVER_SUCCESS
+                response['body'] = None
 
-    response = json.dumps(response, cls=MessageEncoder).encode('utf-8')
-    conn.send(response)
+        response = json.dumps(response, cls=MessageEncoder).encode('utf-8')
+        self.connection.send(response)
 
 
-def onRequestAvailbaleGames(requestParams):
-    response = {}
-    try:
-        requesterNickname = requestParams['nickname']
-        print(requesterNickname)
-    except KeyError as error:
-        response['id']   = ResponseMessageID.GET_AVAILABLE_GAMES_ERROR
-        response['body'] = { 'error': str(error) }
-    else:
-        availableGames = [{'nickname': nickname, 'p2pPort': p2pPort}
-                          for nickname, p2pPort in gameList.items()
-                          if nickname != requesterNickname] 
-        response['id'] = ResponseMessageID.GET_AVAILABLE_GAMES_SUCCESS
-        response['body'] = { 'availableGames': availableGames }
+    def onRequestAvailbaleGames(self, requestParams):
+        response = {}
+        try:
+            requesterNickname = requestParams['nickname']
+            print(requesterNickname)
+        except KeyError as error:
+            response['id']   = ResponseMessageID.GET_AVAILABLE_GAMES_ERROR
+            response['body'] = { 'error': str(error) }
+        else:
+            availableGames = [{'nickname': nickname, 'p2pPort': p2pPort}
+                            for nickname, p2pPort in gameList.items()
+                            if nickname != requesterNickname] 
+            response['id'] = ResponseMessageID.GET_AVAILABLE_GAMES_SUCCESS
+            response['body'] = { 'availableGames': availableGames }
 
-    response = json.dumps(response, cls=MessageEncoder).encode('utf-8')
-    conn.send(response)
+        response = json.dumps(response, cls=MessageEncoder).encode('utf-8')
+        self.connection.send(response)
 
-# dictionary of functions that get selected by the message IDs:
-msgSwitchDict = {
-    RequestMessageID.GET_AVAILABLE_GAMES: onRequestAvailbaleGames,
-    RequestMessageID.CREATE_GAME: Exec_Create_Game,
-    RequestMessageID.JOIN_GAME:   Exec_Join_Game,
-    RequestMessageID.JOIN_SERVER: onRequestJoinServer
-}
 
-serv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-serv.bind(('127.0.0.1', 8080))
-serv.listen()
-serv.setblocking(False)
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+server.bind(('127.0.0.1', 8080))
+print("Server started")
+print("Waiting for client request..")
 while True:
-    print("Waiting for message...")
-    conn, addr = serv.accept()
-    print("Message received.")
-    while True:
-        data = conn.recv(4096)
-        if not data:
-            break
-        request = json.loads(data.decode("utf-8"), cls=MessageDecoder)
-        msgSwitchDict[request['id']](request['body'])
-        print("---Client Message---")
-        print(request)
-        print("--------------------")
-    conn.close()
-    print('client disconnected')
+    server.listen(1)
+    connection, address = server.accept()
+    print('recieved request...')
+    requestHandlerThread = ClientThread(connection)
+    print('created thread to handle request...')
+    requestHandlerThread.start()
+    print('handling request in separate thread')
