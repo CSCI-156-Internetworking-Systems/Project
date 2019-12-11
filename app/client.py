@@ -111,6 +111,7 @@ class Client():
                 print(request)
                 print("--------------------")
                 self.requestHandlers[request['id']](request['body'])
+        self.server.close()
 
     def getListOfAvailableGames(self) -> List[Dict]:
         if self.serverSocket:
@@ -140,6 +141,7 @@ class Client():
 
         if opponentName == 'server':
             self.serverSocket.send(request)
+            response = self.serverSocket.recv(4096)
         else:
             try:
                 self.connectToPeer(peerIP, peerPort)
@@ -208,13 +210,8 @@ class Client():
             self.serverSocket.send(request)
         else:
             self.peerSocket.send(request)
-
-        response = self.serverSocket.recv(4096)
-        response = json.loads(response.decode('utf-8'), cls=MessageDecoder)
-
-        if response['id'] == ResponseMessageID.END_GAME_ACK:
             self.closePeerConnection()
-            self.ticTacToe = None
+        self.ticTacToe = None
 
 
     def leaveServer(self):
@@ -226,10 +223,6 @@ class Client():
             self.peerSocket.send(request)
         self.serverSocket.send(request)
 
-        # response = self.serverSocket.recv(4096)
-        # response = json.loads(response.decode('utf-8'), cls=MessageDecoder)
-
-        # if response['id'] == ResponseMessageID.END_GAME_ACK:
         self.ticTacToe = None
         self.closePeerConnection()
         self.closeServerConnection()
