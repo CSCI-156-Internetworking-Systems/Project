@@ -15,7 +15,7 @@ from game_logic import TicTacToe
 
 class Client():
 
-    def __init__(self, p2pJoinGameCallback):
+    def __init__(self, p2pJoinGameCallback, p2pMakeMoveCallback):
         self.serverSocket = None
         self.peerSocket = None
         self.nickname = None
@@ -25,6 +25,7 @@ class Client():
         self.server = None
         self.serverThread = None
         self.p2pJoinGameCallback = p2pJoinGameCallback
+        self.p2pMakeMoveCallback = p2pMakeMoveCallback
 
         self.requestHandlers = {
             RequestMessageID.JOIN_GAME: self.onRequestJoinGame,
@@ -137,9 +138,9 @@ class Client():
             'nickname': self.nickname,
             'guess': random.random()
         }
-        request = json.dumps(request, cls=MessageEncoder).encode('utf-8')
 
         if opponentName == 'server':
+            request = json.dumps(request, cls=MessageEncoder).encode('utf-8')
             self.serverSocket.send(request)
             response = self.serverSocket.recv(4096)
         else:
@@ -148,6 +149,8 @@ class Client():
             except:
                 raise Exception('Error: unable to connect to peer')
             else:
+                request['body']['p2pPort'] = self.p2pPort
+                request = json.dumps(request, cls=MessageEncoder).encode('utf-8')
                 self.peerSocket.send(request)
                 response = self.peerSocket.recv(4096)
 
@@ -234,6 +237,7 @@ class Client():
         try:
             opponentName  = requestParams['nickname']
             opponentGuess = float(requestParams['guess'])
+            opponentPort  = int(requestParams['p2pPort'])
         except KeyError as error:
             response['id'] = ResponseMessageID.JOIN_GAME_ERROR
             response['body'] = { 'error': str(error) }
@@ -241,6 +245,8 @@ class Client():
             self.connection.send(response)
             return
         else:
+            peerAddr = self.connection.getpeername()
+            self.connectToPeer(peerAddr[0], opponentPort)
             self.opponentName = opponentName
             serverGuess = random.random()
             if serverGuess > opponentGuess:
@@ -268,6 +274,7 @@ class Client():
             if self.ticTacToe.makeMove(opponentMove, opponentName):
                 response['id'] = ResponseMessageID.MAKE_MOVE_SUCCESS
                 response['body'] = None
+                self.p2pMakeMoveCallback(opponentMove)
             else:
                 response['id'] = ResponseMessageID.MAKE_MOVE_ERROR
                 response['body'] = { 'error': 'Invalid move' }

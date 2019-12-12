@@ -21,7 +21,7 @@ class GameGUI(tk.Frame):
         super().__init__(master)
         self.master = master
         self.mainFrame = tk.Frame(self)
-        self.client = Client(self.onPeerRequestJoinGame)
+        self.client = Client(self.onPeerRequestJoinGame, self.getPeersMove)
         self.btnGrid = [[None, None, None],
                         [None, None, None],
                         [None, None, None]]
@@ -261,7 +261,7 @@ class GameGUI(tk.Frame):
             elif not self.client.ticTacToe.hasPossibleMoves():
                 self.onStaleMate(infoLabel)
             else:
-                if self.client.opponentName == 'server':
+                if self.opponent == 'server':
                     self.getServerMove()
                     infoLabel['text'] = self.client.ticTacToe.getTurnPlayer() + "'s turn" 
                     if self.client.ticTacToe.checkWinCondition():
@@ -293,6 +293,11 @@ class GameGUI(tk.Frame):
 
     def getServerMove(self):
         row, col = self.client.getMove('server')
+        self.btnGrid[row][col]['text'] = 'O'
+
+
+    def getPeersMove(self, move):
+        row, col = move
         self.btnGrid[row][col]['text'] = 'O'
     
 
