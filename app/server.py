@@ -160,8 +160,7 @@ class ClientThread(threading.Thread):
 
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-server.bind(('127.0.0.1', 8080))
+server.bind(('', 8080))
 print("Server started")
 print("Waiting for client request..")
 while True:

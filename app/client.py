@@ -95,8 +95,7 @@ class Client():
 
     def startP2PServer(self):
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.server.bind(('127.0.0.1', self.p2pPort))
+        self.server.bind(('', self.p2pPort))
         print("P2P server started")
         print("Waiting for peer request..")
         while True:
