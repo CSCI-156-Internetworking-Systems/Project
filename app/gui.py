@@ -180,8 +180,8 @@ class GameGUI(tk.Frame):
             for index, game in enumerate(availableGames):
                 opponentName = tk.Label(self.availableGamesFrame, text=game['nickname'])
                 joinGameBtn  = tk.Button(self.availableGamesFrame, text='Join') 
-                opponentName.grid(row=index, column=0)
-                joinGameBtn.grid(row=index, column=1)
+                opponentName.grid(row=index + 1, column=0)
+                joinGameBtn.grid(row=index + 1, column=1)
                 joinGameBtn['command'] = partial(onJoinGamePressed, game['nickname'], game['ip'], game['port'])
 
 
