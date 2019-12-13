@@ -241,33 +241,33 @@ class GameGUI(tk.Frame):
         ticTacToeFrame = tk.Frame(self.mainFrame)
         ticTacToeFrame.pack()
 
-        infoLabel = tk.Label(self.mainFrame)
-        infoLabel['text'] = self.client.ticTacToe.getTurnPlayer() + "'s turn"
-        infoLabel.pack()
+        self.infoLabel = tk.Label(self.mainFrame)
+        self.infoLabel['text'] = self.client.ticTacToe.getTurnPlayer() + "'s turn"
+        self.infoLabel.pack()
  
         def onPositionPressed(row, col):
             def onSuccess():
                 currentPlayer = self.client.ticTacToe.getTurnPlayer()
-                infoLabel['text']  = currentPlayer + "'s turn"
+                self.infoLabel['text']  = currentPlayer + "'s turn"
                 self.btnGrid[row][col]['text']  = 'X'
 
             def onError(errorMsg):
-                infoLabel['text'] = errorMsg 
+                self.infoLabel['text'] = errorMsg 
 
             self.makeMove(self.opponent, (row, col), onSuccess, onError)
 
             if self.client.ticTacToe.checkWinCondition():
-                self.onHasWinner(self.client.ticTacToe.checkWinCondition(), infoLabel)
+                self.onHasWinner(self.client.ticTacToe.checkWinCondition(), self.infoLabel)
             elif not self.client.ticTacToe.hasPossibleMoves():
-                self.onStaleMate(infoLabel)
+                self.onStaleMate(self.infoLabel)
             else:
                 if self.opponent == 'server':
                     self.getServerMove()
-                    infoLabel['text'] = self.client.ticTacToe.getTurnPlayer() + "'s turn" 
+                    self.infoLabel['text'] = self.client.ticTacToe.getTurnPlayer() + "'s turn" 
                     if self.client.ticTacToe.checkWinCondition():
-                        self.onHasWinner(self.client.ticTacToe.checkWinCondition(), infoLabel)
+                        self.onHasWinner(self.client.ticTacToe.checkWinCondition(), self.infoLabel)
                     elif not self.client.ticTacToe.hasPossibleMoves():
-                        self.onStaleMate(infoLabel)
+                        self.onStaleMate(self.infoLabel)
 
         for row in range(0, 3):
             for col in range(0, 3):
@@ -299,7 +299,11 @@ class GameGUI(tk.Frame):
     def getPeersMove(self, move):
         row, col = move
         self.btnGrid[row][col]['text'] = 'O'
-    
+        if self.client.ticTacToe.checkWinCondition():
+            self.onHasWinner(self.client.ticTacToe.checkWinCondition(), self.infoLabel)
+        elif not self.client.ticTacToe.hasPossibleMoves():
+            self.onStaleMate(self.infoLabel)
+
 
     def onHasWinner(self, winner, label):
         label['text'] = winner + ' Wins!!!'
